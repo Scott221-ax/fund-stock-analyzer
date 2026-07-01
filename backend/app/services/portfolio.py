@@ -1,18 +1,73 @@
-"""持仓分析服务"""
-from typing import Optional
+"""持仓分析服务 — 基于 akshare 真实净值数据"""
+import csv
+import logging
+import os
+from datetime import date
+from typing import Optional, Any
+
+from ..config import settings
+from ..data_fetch.fund_data import FundDataFetcher
 from ..models.schemas import PortfolioSummary, HoldingBase
+
+logger = logging.getLogger(__name__)
 
 
 class PortfolioService:
     """持仓诊断与分析"""
 
     @staticmethod
-    async def analyze(holdings: list[dict]) -> PortfolioSummary:
+    async def load_portfolio_csv() -> list[dict]:
         """
-        分析持仓：计算总市值、收益、各类指标
-        当前返回 mock 数据，后续接入真实计算
+        从 data/portfolio/ 目录读取 CSV 持仓文件
+        CSV 格式：fund_code, shares, cost_basis  (必需)
+                   fund_name, account             (可选)
         """
-        items = [HoldingBase(**h) for h in holdings] if holdings else []
+        portfolio_dir = settings.portfolio_dir
+        if not os.path.isdir(portfolio_dir):
+            return []
+
+        holdings = []
+        for fname in os.listdir(portfolio_dir):
+            if not fname.endswith(".csv"):
+                continue
+            fpath = os.path.join(portfolio_dir, fname)
+            try:
+                with open(fpath, encoding="utf-8-sig") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        code = row.get("fund_code", "").strip()
+                        if not code:
+                            continue
+                        shares = float(row.get("shares", 0))
+                        cost_basis = float(row.get("cost_basis", 0))
+                        # 用 akshare 拉取真实最新净值作为 current_value
+                        latest_nav = await FundDataFetcher.fetch_latest_nav(code)
+                        current_value = (latest_nav or 0)
+
+                        holdings.append({
+                            "fund_code": code,
+                            "fund_name": row.get("fund_name", "").strip(),
+                            "shares": shares,
+                            "cost_basis": cost_basis,
+                            "current_value": round(current_value, 4) if current_value else cost_basis,
+                            "account": row.get("account", "default").strip(),
+                        })
+            except Exception as e:
+                logger.warning(f"读取持仓文件 {fname} 失败: {e}")
+        return holdings
+
+    @staticmethod
+    async def analyze(holdings: Optional[list[dict]] = None) -> PortfolioSummary:
+        """
+        分析持仓：自动加载 CSV，计算总市值/收益
+        """
+        if holdings is None:
+            holdings = await PortfolioService.load_portfolio_csv()
+
+        if not holdings:
+            holdings = await PortfolioService.get_mock_holdings()
+
+        items = [HoldingBase(**h) for h in holdings]
 
         total_value = sum(h.current_value for h in items)
         total_cost = sum(h.cost_basis for h in items)
@@ -91,3 +146,20 @@ class PortfolioService:
             HoldingBase(fund_code="008283", fund_name="易方达消费行业股票", shares=6000, cost_basis=4.5, current_value=4.12, account="支付宝"),
         ]
         return await PortfolioService.analyze([h.model_dump() for h in mock_holdings])
+    @staticmethod
+    async def get_mock_holdings() -> list[dict]:
+        """返回 mock 持仓，并用 akshare 获取真实最新净值"""
+        mock = [
+            {"fund_code": "110011", "fund_name": "易方达中小盘混合", "shares": 5000, "cost_basis": 8.5, "account": "支付宝"},
+            {"fund_code": "005827", "fund_name": "中欧时代先锋股票", "shares": 3000, "cost_basis": 2.1, "account": "支付宝"},
+            {"fund_code": "000311", "fund_name": "景顺长城沪深300增强", "shares": 8000, "cost_basis": 1.8, "account": "支付宝"},
+            {"fund_code": "002190", "fund_name": "农银新能源主题", "shares": 4000, "cost_basis": 3.2, "account": "支付宝"},
+            {"fund_code": "008283", "fund_name": "易方达消费行业股票", "shares": 6000, "cost_basis": 4.5, "account": "支付宝"},
+        ]
+        for h in mock:
+            nav = await FundDataFetcher.fetch_latest_nav(h["fund_code"])
+            if nav:
+                h["current_value"] = round(nav, 4)
+            else:
+                h["current_value"] = h["cost_basis"]  # 拉不到就按成本
+        return mock
