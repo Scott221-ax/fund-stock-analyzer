@@ -8,8 +8,8 @@ router = APIRouter(prefix="/api/v1/portfolio", tags=["持仓分析"])
 
 @router.get("/summary")
 async def get_portfolio_summary():
-    """获取持仓总览"""
-    summary = await PortfolioService.get_mock_portfolio()
+    """获取持仓总览（自动加载 CSV，回退 mock）"""
+    summary = await PortfolioService.analyze()
     return ApiResponse(data=summary.model_dump())
 
 
