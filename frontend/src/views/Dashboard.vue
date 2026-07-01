@@ -75,8 +75,8 @@
     <el-card shadow="never">
       <template #header><span style="font-weight: 600">持仓基金</span></template>
       <el-table :data="summary.holdings" size="small" stripe>
-        <el-table-column prop="fund_code" label="代码" width="90" />
-        <el-table-column prop="fund_name" label="基金名称" min-width="180" />
+        <el-table-column prop="fund_code" label="代码" width="90" sortable />
+        <el-table-column prop="fund_name" label="基金名称" min-width="180" sortable />
         <el-table-column label="持有份额" width="100">
           <template #default="{ row }">{{ row.shares.toFixed(2) }}</template>
         </el-table-column>

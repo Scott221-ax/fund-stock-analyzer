@@ -21,32 +21,32 @@
         </div>
       </template>
 
-      <el-table :data="localHoldings" size="small" stripe max-height="400">
-        <el-table-column prop="fund_code" label="代码" width="90">
+      <el-table :data="localHoldings" size="small" stripe max-height="400" @sort-change="onSortChange">
+        <el-table-column prop="fund_code" label="代码" width="90" sortable="custom">
           <template #default="{ row }">
             <el-input v-if="editingCode === row.fund_code" v-model="row.fund_code" size="small" style="width:80px" />
             <span v-else>{{ row.fund_code }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="fund_name" label="基金名称" min-width="200">
+        <el-table-column prop="fund_name" label="基金名称" min-width="200" sortable="custom">
           <template #default="{ row }">
             <el-input v-if="editingCode === row.fund_code" v-model="row.fund_name" size="small" />
             <span v-else>{{ row.fund_name }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="shares" label="份额" width="110">
+        <el-table-column prop="shares" label="份额" width="110" sortable="custom">
           <template #default="{ row }">
             <el-input-number v-if="editingCode === row.fund_code" v-model="row.shares" :min="0" :step="100" size="small" controls-position="right" style="width:100px" />
             <span v-else>{{ row.shares.toLocaleString() }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="cost_basis" label="成本(单价)" width="110">
+        <el-table-column prop="cost_basis" label="成本(单价)" width="110" sortable="custom">
           <template #default="{ row }">
             <el-input-number v-if="editingCode === row.fund_code" v-model="row.cost_basis" :min="0" :step="0.1" :precision="4" size="small" controls-position="right" style="width:100px" />
             <span v-else>{{ row.cost_basis ? '¥' + row.cost_basis.toFixed(4) : '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="account" label="账户" width="100">
+        <el-table-column prop="account" label="账户" width="100" sortable="custom">
           <template #default="{ row }">
             <el-select v-if="editingCode === row.fund_code" v-model="row.account" size="small" style="width:90px">
               <el-option label="支付宝" value="支付宝" />
@@ -216,6 +216,18 @@ function startEdit(row) {
 
 function stopEdit() {
   editingCode.value = ''
+}
+
+
+const sortOrder = ref({ prop: '', order: '' })
+function onSortChange({ prop, order }) {
+  sortOrder.value = { prop, order }
+  if (!prop || !order) return
+  localHoldings.value.sort((a, b) => {
+    const va = a[prop] ?? '', vb = b[prop] ?? ''
+    const cmp = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb))
+    return order === 'ascending' ? cmp : -cmp
+  })
 }
 
 function removeRow(index) {
