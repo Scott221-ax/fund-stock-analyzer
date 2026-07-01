@@ -5,6 +5,7 @@ import os
 from typing import Optional
 
 from ..config import settings
+from ..data_fetch.fund_data import FundDataFetcher
 from ..models.schemas import PortfolioSummary, HoldingBase
 
 logger = logging.getLogger(__name__)
@@ -120,3 +121,40 @@ class PortfolioService:
     async def get_risk_metrics(holdings: Optional[list[dict]] = None) -> dict:
         """TODO: 基于净值历史计算风险指标"""
         return {"volatility": 0, "max_drawdown": 0, "sharpe_ratio": 0, "avg_correlation": 0, "var_95": 0}
+    @staticmethod
+    async def save_holdings(holdings: list[dict]) -> list[dict]:
+        """
+        保存持仓到 CSV，自动用 akshare 最新净值计算当前市值
+        current_value = shares * nav_per_unit
+        """
+        portfolio_dir = settings.portfolio_dir
+        os.makedirs(portfolio_dir, exist_ok=True)
+
+        enriched = []
+        for h in holdings:
+            code = h.get("fund_code", "").strip()
+            if not code:
+                continue
+            shares = float(h.get("shares", 0) or 0)
+            cost_basis = float(h.get("cost_basis", 0) or 0)
+            # 拉取最新净值计算总市值
+            nav = await FundDataFetcher.fetch_latest_nav(code)
+            current_value = round(shares * nav, 2) if nav and shares else float(h.get("current_value", 0) or 0)
+            enriched.append({
+                "fund_code": code,
+                "fund_name": h.get("fund_name", "").strip(),
+                "shares": shares,
+                "cost_basis": cost_basis,
+                "current_value": current_value,
+                "account": h.get("account", "default").strip(),
+            })
+
+        # 写回 CSV
+        fpath = os.path.join(portfolio_dir, "alipay_portfolio.csv")
+        with open(fpath, "w", newline="", encoding="utf-8-sig") as f:
+            writer = csv.DictWriter(f, fieldnames=["fund_code", "fund_name", "shares", "cost_basis", "current_value", "account"])
+            writer.writeheader()
+            writer.writerows(enriched)
+
+        logger.info(f"已保存 {len(enriched)} 条持仓到 {fpath}")
+        return enriched

@@ -26,6 +26,8 @@ api.interceptors.response.use(
 // ─── 持仓分析 API ──────────────────────────────
 export const portfolioApi = {
   summary: () => api.get('/portfolio/summary'),
+  holdings: () => api.get('/portfolio/holdings'),
+  saveHoldings: (data) => api.put('/portfolio/holdings', data),
   allocation: () => api.get('/portfolio/allocation'),
   sectors: () => api.get('/portfolio/sectors'),
   overlap: () => api.get('/portfolio/overlap'),

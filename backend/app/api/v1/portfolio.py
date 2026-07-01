@@ -13,6 +13,20 @@ async def get_portfolio_summary():
     return ApiResponse(data=summary.model_dump())
 
 
+@router.get("/holdings")
+async def get_holdings():
+    """获取原始持仓列表（CSV 数据）"""
+    data = await PortfolioService.load_portfolio_csv()
+    return ApiResponse(data=data)
+
+
+@router.put("/holdings")
+async def save_holdings(holdings: list[dict]):
+    """保存持仓（覆盖 CSV，自动计算最新市值）"""
+    data = await PortfolioService.save_holdings(holdings)
+    return ApiResponse(data=data)
+
+
 @router.get("/allocation")
 async def get_asset_allocation():
     """资产配置比例"""
