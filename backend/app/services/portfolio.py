@@ -1,4 +1,5 @@
 """持仓分析服务 — CSV 持仓导入 + akshare 数据增强"""
+import asyncio
 import csv
 import logging
 import os
@@ -120,14 +121,14 @@ class PortfolioService:
         total_value = sum(float(h.get("current_value", 0) or 0) for h in holdings) or 1
         sector_contrib = {}  # sector -> weighted total
 
-        for h in holdings:
-            code = h.get("fund_code", "")
-            fund_val = float(h.get("current_value", 0) or 0)
-            fund_weight = fund_val / total_value
+        codes = [h.get("fund_code", "") for h in holdings]
+        fund_vals = [float(h.get("current_value", 0) or 0) for h in holdings]
 
-            positions = await FundDataFetcher.fetch_fund_position(code)
-            if not positions:
-                continue
+        all_positions = await asyncio.gather(*[FundDataFetcher.fetch_fund_position(c) for c in codes])
+
+        sector_contrib = {}
+        for i, positions in enumerate(all_positions):
+            fund_weight = fund_vals[i] / total_value
             for pos in positions:
                 stock_code = str(pos.get("stock_code", "")).strip()
                 ratio = float(pos.get("ratio", 0) or 0) / 100
@@ -151,12 +152,12 @@ class PortfolioService:
         if not holdings:
             return []
 
-        stock_funds = {}  # stock_code -> { stock, funds, total_ratio }
-        for h in holdings:
-            code = h.get("fund_code", "")
-            positions = await FundDataFetcher.fetch_fund_position(code)
-            if not positions:
-                continue
+        codes = [h.get("fund_code", "") for h in holdings]
+        all_positions = await asyncio.gather(*[FundDataFetcher.fetch_fund_position(c) for c in codes])
+
+        stock_funds = {}
+        for i, positions in enumerate(all_positions):
+            code = codes[i]
             for pos in positions:
                 sc = str(pos.get("stock_code", "")).strip()
                 if not sc:

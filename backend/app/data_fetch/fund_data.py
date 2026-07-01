@@ -4,9 +4,16 @@ import logging
 from datetime import date, datetime
 from typing import Optional
 
+import hashlib
 import akshare as ak
+from ..util_cache import get as cache_get, set as cache_set
 
 logger = logging.getLogger(__name__)
+
+
+def _cache_key(prefix: str, *args) -> str:
+    raw = f"{prefix}:{chr(58).join(str(a) for a in args)}"
+    return hashlib.md5(raw.encode()).hexdigest()
 
 
 class FundDataFetcher:
@@ -107,6 +114,11 @@ class FundDataFetcher:
     @staticmethod
     async def fetch_fund_nav(code: str, start_date: Optional[date] = None, end_date: Optional[date] = None) -> list[dict]:
         """获取基金历史净值"""
+        ck = _cache_key("nav", code)
+        if start_date is None and end_date is None:
+            cached = cache_get(ck)
+            if cached is not None:
+                return cached
         code = FundDataFetcher._normalize_code(code)
         try:
             s = start_date.strftime("%Y%m%d") if start_date else "20000101"
@@ -132,6 +144,10 @@ class FundDataFetcher:
     @staticmethod
     async def fetch_fund_info(code: str) -> dict:
         """获取基金基本信息"""
+        ck = _cache_key("f_info", code)
+        cached = cache_get(ck)
+        if cached is not None:
+            return cached
         code = FundDataFetcher._normalize_code(code)
         try:
             df = await asyncio.to_thread(ak.fund_name_em)
@@ -156,6 +172,10 @@ class FundDataFetcher:
     @staticmethod
     async def fetch_index_valuation(index_code: str) -> dict:
         """获取指数估值（PE + 历史百分位 + 股息率）"""
+        ck = _cache_key("idx_val", index_code)
+        cached = cache_get(ck)
+        if cached is not None:
+            return cached
         try:
             idx_name = FundDataFetcher.INDEX_NAMES.get(index_code, index_code)
             # 从历史数据获取滚动市盈率
@@ -203,13 +223,19 @@ class FundDataFetcher:
     @staticmethod
     async def fetch_fund_position(code: str) -> list[dict]:
         """获取基金前十大重仓股"""
+        ck = _cache_key("f_pos", code)
+        cached = cache_get(ck)
+        if cached is not None:
+            return cached
         code = FundDataFetcher._normalize_code(code)
         try:
             df = await asyncio.to_thread(ak.fund_portfolio_hold_em, symbol=code)
             if df is None or df.empty:
                 return []
             df = df.rename(columns={"股票名称": "stock", "占净值比例": "ratio", "股票代码": "stock_code"})
-            return df[["stock_code", "stock", "ratio"]].head(10).to_dict(orient="records")
+            result = df[["stock_code", "stock", "ratio"]].head(10).to_dict(orient="records")
+            cache_set(ck, result, ttl_seconds=86400)
+            return result
         except Exception as e:
             logger.warning(f"获取 {code} 持仓失败: {e}")
             return []
