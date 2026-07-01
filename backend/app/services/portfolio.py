@@ -109,13 +109,70 @@ class PortfolioService:
 
     @staticmethod
     async def get_sector_exposure(holdings: Optional[list[dict]] = None) -> list[dict]:
-        """TODO: 穿透到底层股票，计算行业暴露"""
-        return [{"sector": "待实现", "ratio": 100}]
+        """
+        行业暴露分析：穿透到底层重仓股 → 映射行业 → 按组合权重汇总
+        """
+        if holdings is None:
+            holdings = await PortfolioService.load_portfolio_csv()
+        if not holdings:
+            return [{"sector": "暂无数据", "ratio": 100}]
+
+        total_value = sum(float(h.get("current_value", 0) or 0) for h in holdings) or 1
+        sector_contrib = {}  # sector -> weighted total
+
+        for h in holdings:
+            code = h.get("fund_code", "")
+            fund_val = float(h.get("current_value", 0) or 0)
+            fund_weight = fund_val / total_value
+
+            positions = await FundDataFetcher.fetch_fund_position(code)
+            if not positions:
+                continue
+            for pos in positions:
+                stock_code = str(pos.get("stock_code", "")).strip()
+                ratio = float(pos.get("ratio", 0) or 0) / 100
+                sector = FundDataFetcher.lookup_sector(stock_code, str(pos.get("stock", "")))
+                sector_contrib[sector] = sector_contrib.get(sector, 0) + fund_weight * ratio
+
+        # 归一化到百分比
+        total_penetrated = sum(sector_contrib.values()) or 1
+        result = [{"sector": k, "ratio": round(v / total_penetrated * 100, 1)}
+                  for k, v in sector_contrib.items()]
+        result.sort(key=lambda x: x["ratio"], reverse=True)
+        return result if result else [{"sector": "暂无行业数据", "ratio": 100}]
 
     @staticmethod
     async def detect_overlap(holdings: Optional[list[dict]] = None) -> list[dict]:
-        """TODO: 检测多只基金共同持有一只股票"""
-        return []
+        """
+        持仓重叠检测：找出被多只基金共同持有的股票
+        """
+        if holdings is None:
+            holdings = await PortfolioService.load_portfolio_csv()
+        if not holdings:
+            return []
+
+        stock_funds = {}  # stock_code -> { stock, funds, total_ratio }
+        for h in holdings:
+            code = h.get("fund_code", "")
+            positions = await FundDataFetcher.fetch_fund_position(code)
+            if not positions:
+                continue
+            for pos in positions:
+                sc = str(pos.get("stock_code", "")).strip()
+                if not sc:
+                    continue
+                if sc not in stock_funds:
+                    stock_funds[sc] = {
+                        "stock": pos.get("stock", ""),
+                        "funds": [],
+                        "total_ratio": 0.0,
+                    }
+                stock_funds[sc]["funds"].append(code)
+                stock_funds[sc]["total_ratio"] = round(stock_funds[sc]["total_ratio"] + float(pos.get("ratio", 0) or 0), 2)
+
+        overlaps = [v for v in stock_funds.values() if len(v["funds"]) > 1]
+        overlaps.sort(key=lambda x: len(x["funds"]), reverse=True)
+        return overlaps
 
     @staticmethod
     async def get_risk_metrics(holdings: Optional[list[dict]] = None) -> dict:

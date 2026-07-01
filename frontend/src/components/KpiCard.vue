@@ -29,7 +29,13 @@ defineProps({
 
 <style scoped>
 .kpi-card {
-  border-radius: 8px;
+  border-radius: var(--border-radius) !important;
+  transition: all var(--transition-normal);
+  cursor: default;
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md) !important;
 }
 .kpi-card :deep(.el-card__body) { padding: 16px; }
 .kpi-inner {
@@ -40,11 +46,15 @@ defineProps({
 .kpi-icon {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+.kpi-card:hover .kpi-icon {
+  transform: scale(1.05);
 }
 .kpi-info {
   display: flex;
