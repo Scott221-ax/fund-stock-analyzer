@@ -39,6 +39,8 @@ class BacktestEngine:
                 df = df.rename(columns={"日期": "date", "收盘": "price"})
                 df["date"] = df["date"].astype(str)
                 return df[["date", "price"]].to_dict(orient="records")
+            elif req.target_type == "us_stock":
+                return await FundDataFetcher.fetch_us_stock_data(code, s, e)
             return await FundDataFetcher.fetch_fund_nav(code, s, e)
         except Exception as ex:
             logger.warning(f"获取数据失败: {ex}")

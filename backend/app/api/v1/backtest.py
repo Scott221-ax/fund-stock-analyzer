@@ -53,5 +53,17 @@ async def get_presets():
             "start_date": "2020-01-01",
             "end_date": "",
         },
+        {
+            "name": "QQQ 均线策略",
+            "target_code": "QQQ",
+            "target_name": "纳斯达克100",
+            "target_type": "us_stock",
+            "initial_capital": 100000,
+            "position_size": 10000,
+            "entry_rules": [{"type": "ma_cross", "params": {"short": 5, "long": 20}, "direction": "golden"}],
+            "exit_rules": [{"type": "take_profit", "value": 8}, {"type": "stop_loss", "value": -5}],
+            "start_date": "2020-01-01",
+            "end_date": "",
+        },
     ]
     return ApiResponse(data=presets)

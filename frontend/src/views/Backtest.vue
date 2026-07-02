@@ -47,7 +47,7 @@
           <template #default="{ row }">
             <span class="fund-code">{{ row.target_code }}</span>
             <el-tag size="small" style="margin-left:5px">
-              {{ row.target_type === 'index' ? '指数' : '基金' }}
+              {{ row.target_type === 'index' ? '指数' : row.target_type === 'us_stock' ? '美股' : '基金' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -132,6 +132,7 @@
               <el-select v-model="targetType" style="width:76px;margin-left:6px">
                 <el-option label="指数" value="index" />
                 <el-option label="基金" value="fund" />
+                <el-option label="美股" value="us_stock" />
               </el-select>
               <el-button size="small" style="margin-left:6px" :icon="Promotion" @click="loadPresets">
                 预设
@@ -393,6 +394,7 @@
           <el-select v-model="dlgData.target_type" style="width:76px;margin-left:6px">
             <el-option label="指数" value="index" />
             <el-option label="基金" value="fund" />
+            <el-option label="美股" value="us_stock" />
           </el-select>
           <el-input v-model="dlgData.target_name" placeholder="名称（可选）" style="width:130px;margin-left:6px" />
         </el-form-item>
@@ -644,6 +646,9 @@ function openCreateDialog() {
   Object.assign(dlgData, {
     id: null, name: '', description: '',
     target_code: '000300', target_name: '', target_type: 'index',
+    initial_capital: 100000, position_size: 10000,
+  }, {
+    target_code: 'QQQ', target_name: '纳斯达克100', target_type: 'us_stock',
     initial_capital: 100000, position_size: 10000,
     start_date: '2020-01-01', end_date: '',
     entry_rules: [{ type: 'ma_cross', direction: 'golden', params: { short: 5, long: 20 } }],

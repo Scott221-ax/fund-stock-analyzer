@@ -297,6 +297,34 @@ class FundDataFetcher:
             return []
 
     @staticmethod
+    async def fetch_us_stock_data(code: str, start_date=None, end_date=None) -> list[dict]:
+        """获取美股/ETF 历史行情（yfinance）"""
+        import yfinance as yf
+        try:
+            s = start_date.strftime("%Y-%m-%d") if start_date else None
+            e = end_date.strftime("%Y-%m-%d") if end_date else None
+            kwargs = {"tickers": code, "auto_adjust": True, "progress": False, "multi_level_index": False}
+            if s: kwargs["start"] = s
+            if e: kwargs["end"] = e
+            df = await asyncio.to_thread(lambda: yf.download(**kwargs))
+            if df is None or df.empty:
+                return []
+            df = df.reset_index()
+            df.columns = [str(c).split(",")[0].strip() for c in df.columns]
+            rename = {}
+            for c in df.columns:
+                if "date" in c.lower(): rename[c] = "date"
+                elif "close" in c.lower(): rename[c] = "price"
+            df = df.rename(columns=rename)
+            if "date" in df.columns:
+                df["date"] = df["date"].astype(str).str[:10]
+            result_cols = [c for c in ["date", "price"] if c in df.columns]
+            return df[result_cols].to_dict(orient="records") if result_cols else []
+        except Exception as ex:
+            logger.warning(f"获取美股 {code} 数据失败: {ex}")
+            return []
+
+    @staticmethod
     async def fetch_sector_performance() -> list[dict]:
         """获取行业板块涨跌"""
         try:

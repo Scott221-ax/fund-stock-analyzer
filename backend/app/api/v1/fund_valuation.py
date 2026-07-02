@@ -142,8 +142,15 @@ async def get_fund_valuation(
         result: ValuationResult = await FundValuationService.calculate(fund_code)
     except ValueError as exc:
         # 业务错误（代码不存在、无持仓数据等）→ 404
-        logger.warning("估值计算 ValueError fund=%s: %s", fund_code, exc)
-        raise HTTPException(status_code=404, detail=str(exc))
+        logger.warning("估值计算无数据 fund=%s: %s", fund_code, exc)
+        return ApiResponse(code=200, message="success", data={
+            "fund_code": fund_code, "fund_name": "", "estimated_change_pct": 0,
+            "is_trading_hour": False, "updated_at": "",
+            "disclosed_holdings": [],
+            "benchmark_proxy": {"index_code":"","index_name":"","weight":0,"change_pct":0,"contribution":0,"status":"normal"},
+            "data_quality": {"disclosed_weight":0,"benchmark_weight":0,"stocks_total":0,"stocks_normal":0,
+                "stocks_suspended":0,"stocks_data_missing":0,"coverage_ratio":0,"is_reliable":False},
+        })
     except Exception as exc:
         # 未预期错误 → 503（服务暂时不可用）
         logger.exception("估值计算未预期错误 fund=%s", fund_code)
@@ -178,7 +185,7 @@ async def get_fund_holdings_only(fund_code: str):
         raise HTTPException(status_code=503, detail="持仓数据暂时不可用")
 
     if not holdings:
-        raise HTTPException(status_code=404, detail=f"基金 {fund_code} 暂无披露持仓数据")
+        return ApiResponse(code=200, message="success", data={"holdings": [], "fund_code": fund_code})
 
     return ApiResponse(
         code=200,
