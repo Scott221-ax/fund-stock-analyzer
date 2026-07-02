@@ -26,7 +26,9 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db():
-    """创建所有表"""
+    """创建所有表（需先导入 ORM 模型，确保 metadata 已注册）"""
+    # 导入 ORM 模型，触发 Strategy 等类注册到 Base.metadata
+    from .models import orm  # noqa: F401
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

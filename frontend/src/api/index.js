@@ -51,10 +51,39 @@ export const marketApi = {
   northFlow: () => api.get('/market/north-flow'),
 }
 
-// 交易回测 API
+// ─── 交易回测 API ──────────────────────────────
 export const backtestApi = {
-  run: (data) => api.post('/backtest/run', data),
-  presets: () => api.get('/backtest/presets'),
+  run:     (data) => api.post('/backtest/run', data),
+  presets: ()     => api.get('/backtest/presets'),
+}
+
+// ─── 策略管理 API ──────────────────────────────
+export const strategyApi = {
+  /** 获取所有策略列表（按创建时间倒序）*/
+  list:   ()         => api.get('/strategies'),
+  /** 按 ID 获取单条策略 */
+  get:    (id)       => api.get(`/strategies/${id}`),
+  /** 新建策略 */
+  create: (data)     => api.post('/strategies', data),
+  /** 全量更新策略 */
+  update: (id, data) => api.put(`/strategies/${id}`, data),
+  /** 删除策略 */
+  delete: (id)       => api.delete(`/strategies/${id}`),
+}
+
+// ─── 因子发掘 API ──────────────────────────────
+export const factorApi = {
+  /** 运行因子发掘，返回五分组净值曲线 + IC/IR 等指标 */
+  mine: (data) => api.post('/factor/mine', data),
+}
+
+// ─── 基金穿透实时估值 API ──────────────────────
+export const fundValuationApi = {
+  /** 获取基金穿透实时估值（含持仓明细）*/
+  get:      (code, refresh = false) =>
+    api.get(`/fund-valuation/${code}`, { params: { refresh } }),
+  /** 仅获取持仓快照（无实时行情，速度快）*/
+  holdings: (code) => api.get(`/fund-valuation/${code}/holdings`),
 }
 
 export default api

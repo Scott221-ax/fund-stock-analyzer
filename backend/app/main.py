@@ -4,8 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .database import init_db, close_db
-from .api.v1 import portfolio, funds, market
-from .api.v1 import backtest
+from .api.v1 import portfolio, funds, market, backtest, strategy, factor, fund_valuation
 
 
 @asynccontextmanager
@@ -53,6 +52,9 @@ app.include_router(portfolio.router)
 app.include_router(funds.router)
 app.include_router(market.router)
 app.include_router(backtest.router)
+app.include_router(strategy.router)
+app.include_router(factor.router)
+app.include_router(fund_valuation.router)
 
 
 @app.get("/")

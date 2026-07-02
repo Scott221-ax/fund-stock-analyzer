@@ -33,7 +33,19 @@ const routes = [
     path: '/backtest',
     name: 'Backtest',
     component: () => import('@/views/Backtest.vue'),
-    meta: { title: '交易回测', icon: 'Coin' },
+    meta: { title: '交易回测', icon: 'DataBoard' },
+  },
+  {
+    path: '/factor-mining',
+    name: 'FactorMining',
+    component: () => import('@/views/FactorMining.vue'),
+    meta: { title: '因子发掘', icon: 'MagicStick' },
+  },
+  {
+    path: '/fund-penetration',
+    name: 'FundPenetration',
+    component: () => import('@/views/FundPenetration.vue'),
+    meta: { title: '盘中估值', icon: 'Odometer' },
   },
 ]
 
