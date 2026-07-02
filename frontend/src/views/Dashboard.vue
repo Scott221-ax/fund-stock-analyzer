@@ -1,10 +1,25 @@
 <template>
   <div>
+    <div v-if="loading" class="page-header">
+      <div class="skeleton" style="width:120px;height:22px;margin-bottom:8px"></div>
+      <div class="skeleton" style="width:200px;height:14px"></div>
+    </div>
+    <template v-if="!loading">
     <div class="page-header">
       <h2>总览</h2>
       <p>持仓总览与市场速览</p>
     </div>
+    </template>
+    
+    <div v-if="loading" class="kpi-grid">
+      <div v-for="i in 4" :key="i" class="el-card skeleton-card" />
+    </div>
+    <div v-if="loading" class="card-grid">
+      <div class="el-card skeleton-chart" />
+      <div class="el-card skeleton-chart" />
+    </div>
 
+    <template v-if="!loading">
     <div class="kpi-grid">
       <KpiCard
         label="总资产"
@@ -95,11 +110,12 @@
         </el-table-column>
       </el-table>
     </el-card>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import VChart from 'vue-echarts'
 import 'echarts'
 import KpiCard from '@/components/KpiCard.vue'
@@ -150,6 +166,9 @@ onMounted(async () => {
     marketIndices.value = mkRes.data?.indices || []
   } catch (e) {
     console.error('Dashboard 加载失败:', e)
+  } finally {
+    loading.value = false
   }
 })
 </script>
+const loading = ref(true)

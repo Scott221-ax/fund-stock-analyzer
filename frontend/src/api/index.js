@@ -51,4 +51,10 @@ export const marketApi = {
   northFlow: () => api.get('/market/north-flow'),
 }
 
+// 交易回测 API
+export const backtestApi = {
+  run: (data) => api.post('/backtest/run', data),
+  presets: () => api.get('/backtest/presets'),
+}
+
 export default api

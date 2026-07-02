@@ -30,7 +30,13 @@
           <el-icon><TrendCharts /></el-icon>
           <template #title>市场扫描</template>
         </el-menu-item>
+        <el-menu-item index="/backtest">
+          <el-icon><Coin /></el-icon>
+          <template #title>交易回测</template>
+        </el-menu-item>
       </el-menu>
+
+    <!-- Mobile Bottom Nav -->
       <div class="collapse-btn" @click="isCollapse = !isCollapse">
         <el-icon :size="18">
           <Fold v-if="!isCollapse" />
@@ -38,6 +44,29 @@
         </el-icon>
       </div>
     </el-aside>
+    <div class="mobile-bottom-nav">
+      <router-link to="/dashboard" class="nav-item" :class="{ active: $route.path === '/dashboard' }">
+        <el-icon :size="20"><DataAnalysis /></el-icon>
+        <span>总览</span>
+      </router-link>
+      <router-link to="/portfolio" class="nav-item" :class="{ active: $route.path === '/portfolio' }">
+        <el-icon :size="20"><Coin /></el-icon>
+        <span>持仓</span>
+      </router-link>
+      <router-link to="/funds" class="nav-item" :class="{ active: $route.path === '/funds' }">
+        <el-icon :size="20"><Search /></el-icon>
+        <span>基金</span>
+      </router-link>
+        <router-link to="/market" class="nav-item" :class="{ active: $route.path === '/market' }">
+          <el-icon :size="20"><TrendCharts /></el-icon>
+          <span>市场</span>
+        </router-link>
+        <router-link to="/backtest" class="nav-item" :class="{ active: $route.path === '/backtest' }">
+          <el-icon :size="20"><Coin /></el-icon>
+          <span>回测</span>
+        </router-link>
+      </div>
+
 
     <!-- 主区域 -->
     <el-container>
@@ -78,7 +107,7 @@ const lastUpdate = ref(new Date().toLocaleDateString('zh-CN'))
 }
 
 .app-aside {
-  background-color: #1a1a2e;
+  background-color: var(--bg-sidebar);
   display: flex;
   flex-direction: column;
   transition: width 0.3s;
@@ -104,6 +133,45 @@ const lastUpdate = ref(new Date().toLocaleDateString('zh-CN'))
 .app-aside .el-menu {
   border-right: none;
   flex: 1;
+}
+
+/* Mobile Bottom Nav */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  z-index: 1000;
+  padding: 4px 0;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -2px 8px rgba(44,62,80,0.08);
+}
+.mobile-bottom-nav .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  transition: color 150ms ease;
+  padding: 4px 12px;
+}
+.mobile-bottom-nav .nav-item.active,
+.mobile-bottom-nav .nav-item:hover {
+  color: var(--color-primary);
+}
+.mobile-bottom-nav .nav-item span { line-height: 1; }
+
+@media (max-width: 768px) {
+  .app-aside { display: none !important; }
+  .mobile-bottom-nav { display: flex !important; }
+  .app-main { padding-bottom: 64px !important; }
 }
 
 .collapse-btn {

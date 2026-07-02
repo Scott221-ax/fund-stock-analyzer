@@ -20,8 +20,9 @@ class MarketScanService:
                            "000688": "科创50", "000001": "上证指数"}
 
             index_data = []
-            for idx_code in main_indices:
-                raw = await FundDataFetcher.fetch_index_valuation(idx_code)
+            raw_results = await asyncio.gather(*[FundDataFetcher.fetch_index_valuation(idx) for idx in main_indices])
+
+            for idx_code, raw in zip(main_indices, raw_results):
                 if raw and raw.get("pe"):
                     index_data.append(IndexValuation(
                         index_name=raw.get("index_name", index_names.get(idx_code, idx_code)),

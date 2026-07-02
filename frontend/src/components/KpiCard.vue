@@ -29,50 +29,49 @@ defineProps({
 
 <style scoped>
 .kpi-card {
-  border-radius: var(--border-radius) !important;
-  transition: all var(--transition-normal);
+  transition: all var(--duration-normal) var(--ease-spring);
   cursor: default;
 }
 .kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: var(--shadow-lg) !important;
 }
-.kpi-card :deep(.el-card__body) { padding: 16px; }
+.kpi-card :deep(.el-card__body) { padding: var(--space-md); }
 .kpi-inner {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-md);
 }
 .kpi-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--border-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all var(--transition-fast);
+  transition: all var(--duration-fast) var(--ease-spring);
 }
 .kpi-card:hover .kpi-icon {
-  transform: scale(1.05);
+  transform: scale(1.08) rotate(-3deg);
 }
 .kpi-info {
   display: flex;
   flex-direction: column;
 }
 .kpi-label {
-  font-size: 13px;
-  color: #888;
+  font-size: var(--font-size-small);
+  color: var(--text-secondary);
   margin-bottom: 2px;
 }
 .kpi-value {
-  font-size: 22px;
+  font-size: var(--font-size-h1);
   font-weight: 700;
   line-height: 1.3;
 }
 .kpi-sub {
-  font-size: 12px;
-  color: #999;
+  font-size: var(--font-size-small);
+  color: var(--text-muted);
   margin-top: 2px;
 }
 </style>

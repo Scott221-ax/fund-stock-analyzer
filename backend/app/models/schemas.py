@@ -88,3 +88,50 @@ class ApiResponse(BaseModel):
     code: int = 200
     message: str = "success"
     data: Optional[dict | list] = None
+
+
+
+# === 交易回测模型 ===
+
+class BacktestRequest(BaseModel):
+    name: str = "自定义策略"
+    target_code: str = "000300"
+    target_name: str = "沪深300"
+    target_type: str = "index"  # index or fund
+    initial_capital: float = 100000
+    position_size: float = 10000
+    entry_rules: list[dict] = []
+    exit_rules: list[dict] = []
+    start_date: str = "2020-01-01"
+    end_date: str = ""
+
+
+class TradeRecord(BaseModel):
+    entry_date: str = ""
+    entry_price: float = 0
+    exit_date: str = ""
+    exit_price: float = 0
+    shares: float = 0
+    return_pct: float = 0
+    profit: float = 0
+    exit_reason: str = ""
+
+
+class BacktestResult(BaseModel):
+    strategy_name: str = ""
+    target_name: str = ""
+    initial_capital: float = 100000
+    final_equity: float = 0
+    total_return_pct: float = 0
+    annualized_return: float = 0
+    max_drawdown: float = 0
+    sharpe_ratio: float = 0
+    total_trades: int = 0
+    winning_trades: int = 0
+    losing_trades: int = 0
+    win_rate: float = 0
+    avg_win_pct: float = 0
+    avg_loss_pct: float = 0
+    profit_factor: float = 0
+    trades: list[TradeRecord] = []
+    equity_curve: list[dict] = []

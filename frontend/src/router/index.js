@@ -29,6 +29,12 @@ const routes = [
     component: () => import('@/views/MarketScan.vue'),
     meta: { title: '市场扫描', icon: 'TrendCharts' },
   },
+  {
+    path: '/backtest',
+    name: 'Backtest',
+    component: () => import('@/views/Backtest.vue'),
+    meta: { title: '交易回测', icon: 'Coin' },
+  },
 ]
 
 const router = createRouter({
